@@ -1,0 +1,30 @@
+.container {
+  max-width: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.input-container {
+  display: flex;
+}
+
+.input {
+  width: 80px;
+}
+
+.add-button {
+  width: 80px;
+  margin-bottom: 16px;
+}
+
+span {
+  margin-top: 16px;
+}
+
+.children {
+  position: relative;
+  left: 8px;
+  display: flex;
+  flex-direction: column;
+  padding-left: 4px;
+}
