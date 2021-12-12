@@ -1,10 +1,9 @@
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
-
-import Options from './components/Options';
+import Selector from './components/Selector';
 import OperationBuilder from './components/OperationBuilder';
+import { evaluateOperation } from './helpers/operation';
+import { Args, Operation } from './types';
 
-import { evaluateOperation } from './helpers/evaluateOperation';
-import { Args, OperationProps } from './types';
 import './styles.css';
 
 interface OperationContextData {
@@ -16,7 +15,7 @@ export const OperationContext = createContext<OperationContextData>({} as Operat
 const App: React.FC = () => {
   const [args, setArgs] = useState<Args>({ 'My Arg': false });
   const [result, setResult] = useState<boolean | undefined>(undefined);
-  const [operation, setOperation] = useState<OperationProps>({
+  const [operation, setOperation] = useState<Operation>({
     id: 1,
     type: 'none',
     values: [],
@@ -61,11 +60,7 @@ const App: React.FC = () => {
     const name = defaultName in args
       ? `${defaultName}${Object.keys(args).length}`
       : defaultName;
-    const newArgs = {
-      ...args,
-      [name]: false,
-    };
-
+    const newArgs = { ...args, [name]: false };
     setArgs(newArgs);
   }, [args]);
 
@@ -90,7 +85,7 @@ const App: React.FC = () => {
               onChange={event => handleChangeArgName(event, arg)}
               className="input"
             />
-            <Options
+            <Selector
               type="constant"
               selected={String(args[arg])}
               onChange={event => handleChangeArgValue(arg, event.target.value)}

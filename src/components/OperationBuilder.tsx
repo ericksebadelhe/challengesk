@@ -1,11 +1,11 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import Options from './Options';
-import { OperationProps, Input } from '../types';
+import Selector from './Selector';
+import { Operation, Input } from '../types';
 import { OperationContext } from '../App';
 
 interface OperationBuilderProps {
-  value: OperationProps;
-  onChange: (value: OperationProps) => void;
+  value: Operation;
+  onChange: (value: Operation) => void;
 }
 
 function OperationBuilder({
@@ -13,13 +13,14 @@ function OperationBuilder({
   onChange,
 }: OperationBuilderProps): JSX.Element {
   const { options } = useContext(OperationContext);
-  const [defaultValues, setDefaultValues] = useState(value);
   const [selectedType, setSelectedType] = useState<Input>(value.type);
   const [selectedValue, setSelectedValue] = useState('none');
   const [optionsType, setOptionsType] = useState<Input[]>(['none', 'none']);
   const [selectedArguments, setSelectedArguments] = useState<string[]>(['none', 'none']);
 
-  const handleChangeInput = (event: React.ChangeEvent<HTMLSelectElement>): void => {
+  const handleChangeSelected = (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
     const selection = event.target.value;
     if (selection in options) {
       setSelectedType(selection as Input)
@@ -29,7 +30,7 @@ function OperationBuilder({
     setSelectedValue(selection);
   }
 
-  const handleClearOperation = () => {
+  const handleClearOperation = (): void => {
     setSelectedType('none');
     setSelectedValue('none');
     onChange({
@@ -39,19 +40,15 @@ function OperationBuilder({
   }
 
   const handleSelectArguments = (argValue: string, argIndex: number): void => {
+    const updatedTypes = [...optionsType];
+    const newValues = [...selectedArguments];
     if (argValue in options) {
-      const updatedTypes = [...optionsType];
       updatedTypes.splice(argIndex, 1, argValue as Input);
-
-      const newValues = [...selectedArguments];
       newValues.splice(argIndex, 1, options[argValue][0]);
-      setSelectedArguments(newValues);
-
       setOptionsType(updatedTypes);
       setSelectedArguments(newValues);
       return;
     }
-    const newValues = [...selectedArguments];
     newValues.splice(argIndex, 1, argValue);
     setSelectedArguments(newValues);
   }
@@ -66,26 +63,24 @@ function OperationBuilder({
   }
 
   const handleAddOperation = () => {
-    const newOp: OperationProps = {
+    const newOp: Operation = {
       id: new Date().getTime(),
       type: 'none',
       values: [],
       children: [],
     }
-
     const updatedValues = {
       ...value,
       children: [...value.children, newOp],
     };
-
     onChange(updatedValues);
   };
 
-  const handleUpdateChildren = (newValues: OperationProps, id: number): void => {
-    const childrenDataIndex = value.children.findIndex(val => val.id === id);
-    if (childrenDataIndex !== -1) {
+  const handleUpdateChildren = (newValues: Operation, id: number): void => {
+    const childIndex = value.children.findIndex(child => child.id === id);
+    if (childIndex !== -1) {
       const updatedValues = { ...value };
-      updatedValues.children.splice(childrenDataIndex, 1, newValues);
+      updatedValues.children.splice(childIndex, 1, newValues);
       onChange(updatedValues);
     }
   }
@@ -110,55 +105,51 @@ function OperationBuilder({
   }, [selectedType, selectedValue, selectedArguments, value.id, value.children]);
 
   useEffect(() => {
-    setDefaultValues(updateValues());
+    onChange(updateValues());
   }, [updateValues]);
 
-  useEffect(() => {
-    onChange(defaultValues);
-  }, [defaultValues, onChange]);
+  return (
+    <div>
+      <Selector
+        type={selectedType}
+        selected={selectedValue}
+        onChange={event => handleChangeSelected(event)}
+        onClick={() => handleClearOperation()}
+      />
 
-return (
-  <div>
-    <Options
-      type={selectedType}
-      selected={selectedValue}
-      onChange={event => handleChangeInput(event)}
-      onClick={() => handleClearOperation()}
-    />
-
-    {(selectedValue === 'and' || selectedValue === 'or') &&
-      <div className="children">
-          <Options
+      {(selectedValue === 'and' || selectedValue === 'or') &&
+        <div className="children">
+          <Selector
             type={optionsType[0]}
             selected={selectedArguments[0]}
             onChange={event => handleSelectArguments(event.target.value, 0)}
             onClick={() => handleClearArgument(0)}
           />
-          <Options
+          <Selector
             type={optionsType[1]}
             selected={selectedArguments[1]}
             onChange={event => handleSelectArguments(event.target.value, 1)}
             onClick={() => handleClearArgument(1)}
           />
-        {(value.children ?? []).map(op =>
-          <OperationBuilder
-            key={op.id}
-            value={op}
-            onChange={value => handleUpdateChildren(value, op.id)}
-          />
-        )}
+          {(value.children ?? []).map(op =>
+            <OperationBuilder
+              key={op.id}
+              value={op}
+              onChange={value => handleUpdateChildren(value, op.id)}
+            />
+          )}
 
-        <button
-          type="button"
-          onClick={() => handleAddOperation()}
-          className="add-button"
-        >
-          + add op
-        </button>
-      </div>
-    }
-  </div>
-);
+          <button
+            type="button"
+            onClick={() => handleAddOperation()}
+            className="add-button"
+          >
+            + add op
+          </button>
+        </div>
+      }
+    </div>
+  );
 }
 
 export default OperationBuilder;
